@@ -1,0 +1,6 @@
+ng g c login
+ng g c employee/add
+ng g c employee/view
+ng g c employee/edit
+ng g service services/services
+

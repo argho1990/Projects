@@ -1,0 +1,280 @@
+npm i bcrypt  body-parser cors express jsonwebtoken mysql mysql2 nodemon sequelize
+****************************************************************************************
+package.json:
+*****************************************************************
+"scripts": {
+    "dev": "nodemon server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+***************************************************************
+server.js
+var express = require("express");
+var cors = require("cors");
+var bodyParser = require("body-parser")
+var app = express();
+var port = process.env.PORT || 3000
+
+app.use(bodyParser.json())
+app.use(cors())
+app.use(
+    bodyParser.urlencoded({ extended: false })
+
+)
+
+var Users = require("./routes/Users")
+
+app.use("/users", Users)
+
+app.listen(port, function () {
+    console.log("Server is running on port")
+})
+
+******************************************************************
+
+create database folder
+db.js
+
+const Sequelize = require("sequelize");
+const db = {}
+const sequelize = new Sequelize("login", "root", "", {
+    host: "localhost",
+    dialect: "mysql",
+    operatorAliases: false,
+
+    pool: {
+        max: 5,
+        min: 0,
+        acquire: 30000,
+        idle: 10000
+    }
+})
+
+db.sequelize = sequelize
+db.Sequelize = Sequelize
+
+module.exports = db
+
+create module Models/User.js
+*******************************************************************
+User.js
+const Sequelize = require('sequelize')
+const db = require("../database/db.js")
+
+module.exports = db.sequelize.define(
+
+    'user',
+    {
+
+        id: {
+            type: Sequelize.INTEGER,
+            primaryKey: true,
+            autoIncrement: true
+        },
+
+        first_name: {
+            type: Sequelize.STRING
+        },
+
+        last_name: {
+            type: Sequelize.STRING
+        },
+
+        email: {
+            type: Sequelize.STRING
+        },
+
+        password: {
+            type: Sequelize.STRING
+        }
+    },
+    {
+        timestamps: false
+    }
+
+)
+***********************************************************
+create folder routes/User.js
+
+const express = require('express')
+const users = express.Router()
+const cors = require('cors')
+const jwt = require('jsonwebtoken')
+
+const User = require('../models/User')
+users.use(cors())
+
+process.env.SECRET_KEY = 'secret'
+
+****************************************************************************************
+users.post('/register', (req, res) => {
+  const today = new Date()
+  const userData = {
+    first_name: req.body.first_name,
+    last_name: req.body.last_name,
+    email: req.body.email,
+    password: req.body.password,
+    created: today
+  }
+
+  User.findOne({
+    where: {
+      email: req.body.email
+    }
+  })
+    //TODO bcrypt
+    .then(user => {
+      if (!user) {
+        User.create(userData)
+          .then(user => {
+            let token = jwt.sign(user.dataValues, process.env.SECRET_KEY, {
+              expiresIn: 1440
+            })
+            res.json({ token: token })
+          })
+          .catch(err => {
+            res.send('error: ' + err)
+          })
+      } else {
+        res.json({ error: 'User already exists' })
+      }
+    })
+    .catch(err => {
+      res.send('error: ' + err)
+    })
+})
+****************************************************************************
+users.post('/login', (req, res) => {
+  User.findOne({
+    where: {
+      email: req.body.email,
+      password: req.body.password
+    }
+  })
+    .then(user => {
+      if (user) {
+        let token = jwt.sign(user.dataValues, process.env.SECRET_KEY, {
+          expiresIn: 1440
+        })
+        res.json({ token: token })
+      } else {
+        res.send('User does not exist')
+      }
+    })
+    .catch(err => {
+      res.send('error: ' + err)
+    })
+})
+
+******************************************************************************
+users.get('/profile', (req, res) => {
+  var decoded = jwt.verify(req.headers['authorization'], process.env.SECRET_KEY)
+
+  User.findOne({
+    where: {
+      id: decoded.id
+    }
+  })
+    .then(user => {
+      if (user) {
+        res.json(user)
+      } else {
+        res.send('User does not exist')
+      }
+    })
+    .catch(err => {
+      res.send('error: ' + err)
+    })
+})
+
+module.exports = users
+
+18.17 [vlc]
+
+=>github link:https://github.com/ArjunAranetaCodes/MoreCodes-Youtube/tree/master/mean-mysql-login-reg
+*******************************************************************************************************
+code[video]:
+
+users.post('/register', (req, res) => {
+    const today = new Date()
+    const userData = {
+        first_name: req.body.first_name,
+        last_name: req.body.last_name,
+        email: req.body.email,
+        password: req.body.password,
+
+    }
+
+    User.findOne({
+        where: {
+            email: req.body.email
+        }
+    })
+        .then(user => {
+            if (!user) {
+                const hash = bcrypt.hashSync(userData.password, 10)
+                userData.password = hash
+                User.create(userData)
+                    .then(user => {
+                        let token = jwt.sign(user.dataValues, process.env.SECRET_KEY,
+                            {
+                                expiresIn: 1440
+                            })
+                        res.json({ token: token })
+                    })
+                    .catch(err => {
+                        res.send('error:' + error)
+                    })
+            } else {
+                res.json({ error: 'User already exists' })
+            }
+        })
+        .catch(err => {
+            res.send('error:' + error)
+        })
+
+})
+
+*****************************************************************************************
+github:
+
+users.post('/register', (req, res) => {
+    const today = new Date()
+    const userData = {
+        first_name: req.body.first_name,
+        last_name: req.body.last_name,
+        email: req.body.email,
+        password: req.body.password,
+    }
+
+    User.findOne({
+        where: {
+            email: req.body.email
+        }
+    })
+        //TODO bcrypt
+        .then(user => {
+            if (!user) {
+                User.create(userData)
+                    .then(user => {
+                        let token = jwt.sign(user.dataValues, process.env.SECRET_KEY, {
+                            expiresIn: 1440
+                        })
+                        res.json({ token: token })
+                    })
+                    .catch(err => {
+                        res.send('error: ' + err)
+                    })
+            } else {
+                res.json({ error: 'User already exists' })
+            }
+        })
+        .catch(err => {
+            res.send('error: ' + err)
+        })
+})
+
+****************************************************************************************
+
+
+
+

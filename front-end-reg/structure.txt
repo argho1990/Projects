@@ -1,0 +1,285 @@
+(*) src 
++---(*) app[parent]
+|   +--(*) user[child]
+|       |--user.component.ts|.html|.css
+|       +--(*) sign-up
+|       |   |--sign-up.component.ts|.html|.css
+|       | 
+|       | 
+|       |--(*)shared
+|       |    |--user.service.ts
+|       |    |--user.model.ts
+|       |
+|       |
+|       |
+|       |
+|       |--app.module.ts
+|       |--routes.ts
+|
+|--index.html 
+
+
+http://www.codaffection.com/mean-stack-tutorial/user-registration-in-mean-stack-using-angular-6nt-fro-end/
+
+// user component 
+ng g c user
+// sign-up component - from user folder
+ng g c sign-up
+// service class - from shared folder
+ng g s user
+// model class - from shared folder
+ng g class user --type=model
+
+export class User {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+}
+
+we dont need to mess with saltSecret.
+
+https://www.truecodex.com/course/angular-6/how-to-use-external-js-files-and-javascript-code-in-angular
+
+magento:
+https://www.youtube.com/channel/UCrG9BMLvPsSJ07iHnUJq0bg/playlists
+
+client side validation will give the correctnes of data in the real time without  reaching upto server-side.
+For a hacker it is easy to bypass client side validation,in that case server side validation
+will secure the data.
+
+from this on submit function we have to consume nodejs API by passing details of new user.
+
+onSubmit(form: NgForm) {
+
+    
+  }
+
+
+#To consume the nodejs API,we will use the service class which is user.service class here.
+
+First we will use the http library,
+Create a parameter inside the constructor here.
+add AppModule in corrersponding ts file.[imports array]
+
+
+export class UserService {
+
+  selectedUser: User = {
+
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: ''
+
+  };
+
+
+  constructor(private http:HttpClient) {
+
+    postUser(user:User){
+      this.http.post( ,user)
+    }
+   }
+}
+
+
+24:05
+
+npm install --save jsonwebtoken passport passport-local lodash
+
+#passport [npm package] or passport.js
+=>act as an authenication middleware in nodejs application.
+=>has various strategies for authenication.
+=>Fro eg local strategy means authenication using username and password.
+=>other than it has strategies which uses social accounts lke facebook,twitter,gmail,github,etc.
+=>Here in this nodejs application we will use authenication using local strategy.
+=>that is why we have installed this package passport-local for local.
+
+#authenication using local strategy:
+=>inside the config folder add one additional file for packages.[passport config.js]
+
+const passport = require('passport');
+const localStrategy =require('passport-local').Strategy//strategy class from passport local.
+const mongoose = require('mongoose'); 
+//interact with mongoDB.
+
+var User = mongoose.model('User');//User variable we have stored the User Schema.
+//in order to call authentication we will use the function used from passport package.
+
+passport.use();//pass an object from local strategy class.
+
+#local constructor we will pass the option usernameField is equal to 'email".
+By default user credential for local strategy are our username and password.
+If there is any change we can specify with this option here.({usernameField:'email'})
+Instead of username we have email so that is why we have specified username field 
+equal to email.
+
+new localStrategy({usernameField:'email'})
+
+#As a second parameter we have a second parameter like this,it has 
+parameters username,password and done.
+
+#When we call for authenication from passport,this arrow function will be called.
+(username,password,done)={}
+
+#Inside this function we have to verify whether the credentials email and password
+is valid or not.
+So,lets look how you can do that.
+First of all we will check whether we have a user of given email address.
+As a first parameter we have username in our application it will be an email address.
+
+#In previous tutorial we have inserted user records in our mongoDb.
+We can call this findOne function in mongoose Model.
+
+new localStrategy({usernameField:'email'},
+
+(username,password,done)=>{
+//1.As a parameter we can pass this condition here[email=username]
+  2.Actually in this application,it will be an email address.
+  3.After this mongoose function,it has second parameter,this callback function will be called,it has two parameters,
+    err and user record. 
+
+User.findOne({email:username},(err,user)=>{
+
+  });
+ 
+})
+
+ 4.If there is any error,it will return this by calling this done function,and we will pass this error,
+ so when call the authenticate function,from passport,this err object will be returned as a response.
+
+#If there is no error then we will check for unknown users,that means user record is not found with 
+ given email address,
+ 
+#In that case we can use this else if condition here,we will return this done 
+ function,by passing these paramters => null,false {message:'Email is not registered'} 
+
+#If there is a [user] with given [emailaddress],then we will compare the [password] so inside this else if block,
+ we call this verify password function from [userschema] by passing the plain password.
+ If given plain password does not match with original password then we will return this done function with these
+ parameters.
+
+#Finally,if we have only one case,that means you have a success authenication,even username and password are valid,
+ we will return the done case with these parameters.null and here we have the user-record.
+
+ User.findOne({email:username},
+  (err,user)=>{
+  if(err)
+      return done(err);
+     //unknown user
+      else if(!user)
+      return done(null,false,{message:'Email is not registered'});
+      //wrong password
+      else if(!user.verifyPassword(password))
+       return done(null,false,{message:'Wrong password'});
+       //authenication succeeded.
+      else
+       return done(null,user);  
+   });
+ 
+  }) 
+
+[user.model.js]
+
+#Define the verify password function inside the user-schema here:
+
+#Group for methods here:
+If you check this function call here,we have used an instance of user-schema,so here we need to define an instance
+method. 
+
+#In order to add user-schema we can use this property:
+#Methods:
+
+=>userSchema.methods.verifyPassword and here is the name of the password and also the function body.
+=>userSchema.methods.verifyPassword = function(password){}; =>plain password.
+=>we have to compare this password with original password.
+=>So here we have the bycrypt package object the we will call this compareSync function.
+=>As a first parameter here we have the plain password and here we have the enrypted password,we have already
+  stored.We have already stored the encrypted password into this property by calling this findOne function,
+  if there is a user,user-password will be stored inside this password property,so will compare the plain 
+  password and encrypted password using this function compare sync.
+=>If they match each other,it will return true or it will return false.  
+
+  userSchema.methods.verifyPassword = function(password){
+    return bycrypt.compareSync(password,this.password); 
+  };
+
+ 
+#back to passportConfig.js: 
+=>successfully configured passport for local authenication inside this.  
+=>wE will needing passport for authenication inside this node.js application.
+
+
+#app.js file:
+//middleware:
+app.use(passport.initialize);
+
+=>add require statement for the config file for passport.js :
+=>we are going to use passport for authenication.
+=>need to call the use function using app variable.
+=>inside the function we will call the initialize() function from passport.
+
+
+#add post route function to send credentials email and password for authenication.
+#for that open [user-controller.js]
+
+
+#module.exports here we have the function,authenicate and we have the arrow function with 3 parameters request,
+req,res and next inside the function.
+
+#Inside the function we are going to call authenicate function passport.
+
+module.exports.authenicate =(req,res,next)={}
+
+
+module.exports.authenicate = (req,res,next)=>{
+  
+#call for passport authenication
+
+#As a first parameter to this function we have to mention the strategy:
+
+#For now we have the local strategy and as a second parameter we can pass this function,
+  (err,user,info)={}
+  passport.authenicate('local',(err,user,info)=>{});
+
+#All of these parameters values are passed from this passport config file inside these else if blocks you can see.
+ We have returned this done function. 
+
+#All of these values will be received inside this callback function here 
+
+#At most we have three parameters for this done function here or this error we have only one parameter.
+
+#Now when we call this authenicate function from passport it actually executes this arrow function,inside this 
+configiration file passportConfig.js.
+
+#inside this function we have already defined criteria for authenicating a user-based on his email and password.
+
+#along with this authenicate function call from passport here we have the additional bracket pair for request and 
+response. 
+
+#passport.authenicate('local',(err,user,info)=>{})(req,res);
+then only we can access (req and res) object inside this callback function (err,user,info)=>{}.
+
+#    
+}
+
+ 
+ 
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  

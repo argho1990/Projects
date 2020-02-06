@@ -1,0 +1,24 @@
+npm install express body-parser --save
+
+http://localhost:3000/api
+
+MongoDB
+
+rajatsgupta123@gmail.com
+transform_ticklu@1990
+
+rajatsgupta123
+transformTicklu@1990
+
+mongodb+srv://rajatsgupta123:<password>@cluster0-isgrf.mongodb.net/test?retryWrites=true&w=majority
+transformTicklu@1990
+
+database name :mloginm
+collection:users
+
+ON API's:
+https://www.youtube.com/watch?v=rC9rqSQRe38&list=PLC3y8-rFHvwg2RBz6UplKTGIXREj9dV0G&index=7
+
+
+ { useNewUrlParser: true, useUnifiedTopology: true }, err => 
+

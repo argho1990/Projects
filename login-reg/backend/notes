@@ -1,0 +1,17 @@
+JSON WEB TOKEN:
+
+=>it is a JSON Object.
+=>JWT as a string,it is generated as a result of encryption and encoding of user-details.
+=>this strig will be sent in the form of JSON object.
+=>it will be light weight and very easy to use considering XML format.
+
+
+Mechanism of JWT System:
+
+
+
+
+
+
+
+
